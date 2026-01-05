@@ -1,12 +1,27 @@
+:root {
+    --bg-color: #1a1a2e;
+    --card-bg: #16213e;
+    --input-bg: #0f3460;
+    --primary: #e94560;
+    --primary-dark: #c0354a;
+    --accent: #4effef;
+    --text-main: #ffffff;
+    --text-muted: #aaaaaa;
+    --border-color: #2a2a40;
+    --transition-speed: 0.2s;
+}
+
 body {
-    font-family: 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     text-align: center;
-    background: #1a1a2e;
-    color: #fff;
+    background-color: var(--bg-color);
+    color: var(--text-main);
     padding: 20px;
     margin: 0;
     -webkit-user-select: none;
     user-select: none;
+    overflow-x: hidden;
+    /* Evita scroll horizontal indesejado */
 }
 
 .container {
@@ -15,128 +30,15 @@ body {
     padding-bottom: 50px;
 }
 
-/* --- Header --- */
-.header-logo h1 {
-    margin: 0 0 20px 0;
-    font-size: 32px;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    color: #e94560;
+/* --- Tipografia e Utilitários --- */
+h1,
+h2,
+h3,
+h4 {
+    margin: 0;
+    font-weight: 700;
 }
 
-/* --- Controle de Quantidade (Novo) --- */
-.counter-control {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 15px;
-    margin-bottom: 20px;
-    background: #0f3460;
-    padding: 10px;
-    border-radius: 12px;
-}
-
-.btn-counter {
-    background: #16213e;
-    color: white;
-    border: 1px solid #e94560;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    font-size: 18px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: 0.1s;
-}
-
-.btn-counter:active {
-    background: #e94560;
-    transform: scale(0.9);
-}
-
-#displayQtd {
-    font-size: 24px;
-    font-weight: bold;
-    min-width: 30px;
-}
-
-/* --- Inputs de Nome (Melhorados) --- */
-.card-setup {
-    background: #16213e;
-    padding: 20px;
-    border-radius: 15px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-}
-
-.inputs-container {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.input-nome {
-    background: #0f3460;
-    color: white;
-    border: 1px solid #2a2a40;
-    padding: 15px;
-    border-radius: 10px;
-    font-size: 16px;
-    transition: 0.3s;
-    animation: slideIn 0.3s ease-out;
-}
-
-.input-nome:focus {
-    border-color: #e94560;
-    outline: none;
-    background: #1a1a2e;
-}
-
-@keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* --- Botões Gerais --- */
-button {
-    width: 100%;
-    padding: 14px;
-    margin: 8px 0;
-    border-radius: 8px;
-    border: none;
-    font-size: 16px;
-    cursor: pointer;
-    font-weight: bold;
-    transition: 0.2s;
-    touch-action: manipulation;
-}
-
-.btn-primary {
-    background: #e94560;
-    color: white;
-    box-shadow: 0 4px 0 #c0354a;
-}
-
-.btn-primary:active {
-    transform: translateY(4px);
-    box-shadow: none;
-}
-
-.btn-secondary {
-    background: #16213e;
-    border: 1px solid #0f3460;
-    color: white;
-}
-
-/* --- Utilitários --- */
 .hidden {
     display: none !important;
 }
@@ -153,21 +55,185 @@ button {
     margin-top: 30px;
 }
 
+.text-accent {
+    color: var(--accent);
+}
+
+.text-muted {
+    color: var(--text-muted);
+}
+
 .sm-text {
     font-size: 12px;
     padding: 8px;
+    color: var(--text-muted);
 }
 
 .label-desc {
     text-align: left;
     display: block;
-    color: #aaa;
+    color: var(--text-muted);
     font-size: 14px;
+    margin-bottom: 5px;
 }
 
-/* --- Lista de Nomes (Seleção) --- */
+/* --- Header --- */
+.header-logo .logo-icon {
+    font-size: 60px;
+    display: block;
+    margin-bottom: 10px;
+}
+
+.header-logo h1 {
+    margin-bottom: 20px;
+    font-size: 32px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--primary);
+}
+
+.game-desc {
+    color: #ccc;
+    font-size: 15px;
+    line-height: 1.5;
+    margin: -10px auto 30px auto;
+    max-width: 400px;
+}
+
+.game-desc strong {
+    color: var(--accent);
+    font-weight: normal;
+}
+
+/* --- Componentes de UI --- */
+.card-setup,
+.box-link-container,
+.card-face {
+    background: var(--card-bg);
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.card-setup {
+    padding: 20px;
+}
+
+/* Botões */
+button {
+    width: 100%;
+    padding: 14px;
+    margin: 8px 0;
+    border-radius: 8px;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: transform var(--transition-speed), box-shadow var(--transition-speed);
+    touch-action: manipulation;
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: white;
+    box-shadow: 0 4px 0 var(--primary-dark);
+}
+
+.btn-primary:active {
+    transform: translateY(4px);
+    box-shadow: none;
+}
+
+.btn-secondary {
+    background: var(--card-bg);
+    border: 1px solid var(--input-bg);
+    color: white;
+}
+
+/* Controles de Quantidade (+ e -) */
+.counter-control {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 20px;
+    background: var(--input-bg);
+    padding: 10px;
+    border-radius: 12px;
+}
+
+.small-counter {
+    margin-bottom: 5px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+}
+
+.btn-counter {
+    background: var(--card-bg);
+    color: white;
+    border: 1px solid var(--primary);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+}
+
+.btn-counter:active {
+    background: var(--primary);
+    transform: scale(0.95);
+}
+
+#displayQtd,
+#displayQtdImp {
+    font-size: 24px;
+    font-weight: bold;
+    min-width: 30px;
+}
+
+/* Inputs */
+.inputs-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.input-nome {
+    background: var(--input-bg);
+    color: white;
+    border: 1px solid var(--border-color);
+    padding: 15px;
+    border-radius: 10px;
+    font-size: 16px;
+    transition: 0.3s;
+    width: 100%;
+    box-sizing: border-box;
+    animation: slideIn 0.3s ease-out;
+}
+
+.input-nome:focus {
+    border-color: var(--primary);
+    outline: none;
+    background: var(--bg-color);
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Lista de Seleção */
 .btn-nome {
-    background: #0f3460;
+    background: var(--input-bg);
     color: white;
     text-align: left;
     padding: 15px;
@@ -184,20 +250,48 @@ button {
 }
 
 /* --- Painel do Mestre --- */
-.box-link {
-    background: #222;
-    padding: 10px;
-    border-radius: 8px;
+.box-link-container {
+    padding: 15px;
+    border-radius: 12px;
     margin-bottom: 20px;
+    border: 1px solid #333;
 }
 
-.input-link {
-    background: transparent;
-    color: #4effef;
+.link-wrapper {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.input-link-modern {
+    background: var(--card-bg);
+    color: var(--accent);
     font-weight: bold;
-    text-align: center;
-    border: none;
+    border: 1px solid var(--input-bg);
+    padding: 10px;
+    border-radius: 8px;
+    flex-grow: 1;
+    text-align: left;
+    font-size: 14px;
     width: 100%;
+}
+
+.btn-icon {
+    width: 46px;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    background: var(--card-bg);
+    border: 1px solid var(--input-bg);
+    border-radius: 8px;
+}
+
+.btn-icon:active {
+    background: var(--primary);
+    border-color: var(--primary);
 }
 
 #statusJogadores {
@@ -213,7 +307,7 @@ button {
     justify-content: space-between;
 }
 
-/* --- Tags e Categorias --- */
+/* Tags */
 .tags-container {
     display: flex;
     flex-wrap: wrap;
@@ -227,7 +321,7 @@ button {
 }
 
 .tag-label {
-    background: #16213e;
+    background: var(--card-bg);
     border: 1px solid #444;
     padding: 8px 15px;
     border-radius: 20px;
@@ -238,51 +332,86 @@ button {
 }
 
 .tag-checkbox:checked+.tag-label {
-    background: #e94560;
+    background: var(--primary);
     color: white;
-    border-color: #e94560;
+    border-color: var(--primary);
     font-weight: bold;
 }
 
-/* --- Seletor de Impostores --- */
-.impostor-selector {
-    display: flex;
-    justify-content: space-around;
-    background: #16213e;
-    padding: 10px;
-    border-radius: 8px;
-}
-
-.impostor-selector label {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-/* --- Card do Jogo --- */
-.card {
-    background: #16213e;
-    padding: 30px 20px;
-    border-radius: 20px;
+/* --- Game Card (Flip Effect) --- */
+.scene {
+    width: 100%;
+    height: 320px;
+    perspective: 800px;
     margin-top: 30px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-    border: 1px solid #2a2a40;
+}
+
+.card-object {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+    transform-style: preserve-3d;
+    cursor: pointer;
+    will-change: transform;
+}
+
+.card-object.is-flipped {
+    transform: rotateY(180deg);
+}
+
+.card-face {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.card-front {
+    background: linear-gradient(135deg, var(--card-bg) 0%, var(--input-bg) 100%);
+    color: white;
+}
+
+.card-back {
+    background: var(--card-bg);
+    transform: rotateY(180deg);
 }
 
 .divisor-card {
+    width: 100%;
     border-color: #333;
     opacity: 0.5;
     margin: 15px 0;
+    border-style: solid;
+    border-width: 1px 0 0 0;
 }
 
 .palavra-secreta {
-    font-size: 38px;
+    font-size: 32px;
     font-weight: 900;
-    margin: 10px 0 10px 0;
-    color: #ffffff;
-    text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+    margin: 10px 0;
+    color: #fff;
     text-transform: uppercase;
     word-wrap: break-word;
+}
+
+.categoria-destaque {
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: bold;
+    margin-bottom: 5px;
+    padding: 5px 10px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    display: inline-block;
 }
 
 .role-badge {
@@ -296,27 +425,14 @@ button {
 
 .impostor-badge {
     background: rgba(233, 69, 96, 0.2);
-    color: #e94560;
-    border: 1px solid #e94560;
+    color: var(--primary);
+    border: 1px solid var(--primary);
 }
 
 .cidadao-badge {
     background: rgba(78, 255, 239, 0.1);
-    color: #4effef;
-    border: 1px solid #4effef;
-}
-
-.rotulo-papel {
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    color: #888;
-}
-
-.aviso-mestre {
-    font-size: 12px;
-    color: #666;
-    margin-top: 20px;
+    color: var(--accent);
+    border: 1px solid var(--accent);
 }
 
 /* --- Modal --- */
@@ -338,12 +454,12 @@ button {
 }
 
 .modal-box {
-    background: #16213e;
+    background: var(--card-bg);
     padding: 25px;
     border-radius: 15px;
     width: 90%;
     max-width: 350px;
-    border: 1px solid #4effef;
+    border: 1px solid var(--accent);
     box-shadow: 0 0 20px rgba(78, 255, 239, 0.2);
     text-align: center;
 }
@@ -352,77 +468,4 @@ button {
     display: flex;
     gap: 10px;
     margin-top: 20px;
-}
-
-/* --- Novo Estilo do Link (Painel Mestre) --- */
-.box-link-container {
-    background: #222;
-    padding: 15px;
-    border-radius: 12px;
-    margin-bottom: 20px;
-    border: 1px solid #333;
-}
-
-.link-wrapper {
-    display: flex;
-    gap: 8px;
-    margin-top: 8px;
-}
-
-.input-link-modern {
-    background: #16213e;
-    color: #4effef;
-    font-weight: bold;
-    border: 1px solid #0f3460;
-    padding: 10px;
-    border-radius: 8px;
-    flex-grow: 1;
-    /* Ocupa o espaço restante */
-    text-align: left;
-    font-size: 14px;
-}
-
-.btn-icon {
-    width: 46px;
-    /* Tamanho fixo quadrado */
-    margin: 0;
-    /* Remove margem padrão */
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 20px;
-    background: #16213e;
-    border: 1px solid #0f3460;
-    border-radius: 8px;
-}
-
-.btn-icon:active {
-    background: #e94560;
-    border-color: #e94560;
-}
-
-/* --- Ajuste para o contador de impostores (menor) --- */
-.small-counter {
-    margin-bottom: 5px;
-    background: #16213e;
-    /* Fundo mais discreto */
-}
-
-#msgLimiteImpostor {
-    margin-top: 0;
-    font-size: 12px;
-}
-
-/* Adicione isso junto com os estilos do Card */
-.categoria-destaque {
-    font-size: 14px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    font-weight: bold;
-    margin-bottom: 5px;
-    padding: 5px 10px;
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 8px;
-    display: inline-block;
 }

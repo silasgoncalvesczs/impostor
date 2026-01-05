@@ -6,116 +6,88 @@ const bancoPalavras = require('./palavras');
 
 app.use(express.static('public'));
 
-// Estado Global
+// Estado Global (Em memória)
 let estadoJogo = {
     criado: false,
-    jogadores: [],
+    jogadores: [], // { nome, socketId, papel, info, categoriaExibida }
     config: {},
     rodadaAtiva: false
 };
 
 io.on('connection', (socket) => {
-
+    // Ao conectar, envia o estado atual para o cliente se situar
     socket.emit('estadoAtual', estadoJogo);
 
-    // MESTRE: Cria a sala
+    // --- SETUP: MESTRE CRIA SALA ---
     socket.on('criarSala', (dados) => {
-        estadoJogo.criado = true;
-        estadoJogo.config = {
-            categoria: dados.categoria,
-            qtdImpostores: dados.qtdImpostores
+        estadoJogo = {
+            criado: true,
+            jogadores: dados.nomes.map(nome => ({
+                nome: nome,
+                socketId: null,
+                papel: null,
+                info: null,
+                categoriaExibida: null
+            })),
+            config: {},
+            rodadaAtiva: false
         };
-        estadoJogo.jogadores = dados.nomes.map(nome => ({
-            nome: nome,
-            socketId: null,
-            papel: null,
-            info: null
-        }));
         io.emit('estadoAtual', estadoJogo);
     });
 
-    // JOGADOR: Entra
-    socket.on('escolherNome', (nomeEscolhido) => {
-        const jogador = estadoJogo.jogadores.find(j => j.nome === nomeEscolhido);
-        if (jogador && !jogador.socketId) {
+    // --- LOGIN: JOGADOR ESCOLHE AVATAR ---
+    socket.on('escolherNome', (nome) => {
+        const jogador = estadoJogo.jogadores.find(j => j.nome === nome);
+
+        // Permite login se o nome existe e não tem ninguém conectado nele (ou reconexão)
+        if (jogador && (!jogador.socketId || jogador.socketId === socket.id)) {
             jogador.socketId = socket.id;
-            socket.emit('loginSucesso', { nome: nomeEscolhido });
+            socket.emit('loginSucesso', { nome });
             io.emit('estadoAtual', estadoJogo);
 
-            // Reconexão durante jogo
+            // Se reconectou no meio de uma rodada, reenvia a carta
             if (estadoJogo.rodadaAtiva && jogador.papel) {
-                socket.emit('receberCarta', {
-                    papel: jogador.papel,
-                    info: jogador.info
-                });
+                enviarCarta(socket, jogador);
             }
         }
     });
 
-    // MESTRE: Inicia rodada
-    socket.on('iniciarRodada', (dadosConfig) => {
-        // 1. Filtra quais categorias do banco foram selecionadas pelo usuário
-        const categoriasValidas = dadosConfig.categorias.filter(cat => bancoPalavras[cat]);
+    // --- GAME: INICIAR RODADA ---
+    socket.on('iniciarRodada', (config) => {
+        const catsValidas = config.categorias.filter(c => bancoPalavras[c]);
+        const catSorteada = catsValidas[Math.floor(Math.random() * catsValidas.length)] || "Objetos do cotidiano";
 
-        if (categoriasValidas.length === 0) {
-            // Fallback caso dê erro
-            categoriasValidas.push("Objetos do cotidiano");
-        }
-
-        // 2. Sorteia UMA categoria entre as selecionadas
-        const categoriaSorteada = categoriasValidas[Math.floor(Math.random() * categoriasValidas.length)];
-
-        // 3. Pega as palavras dessa categoria específica
-        const listaPalavras = bancoPalavras[categoriaSorteada];
+        const listaPalavras = bancoPalavras[catSorteada];
         const palavraSecreta = listaPalavras[Math.floor(Math.random() * listaPalavras.length)];
 
-        // Pega quem está online
-        let jogadoresOnline = estadoJogo.jogadores.filter(j => j.socketId !== null);
+        // Filtra e embaralha jogadores online
+        let onlines = estadoJogo.jogadores.filter(j => j.socketId !== null);
+        onlines = embaralharArray(onlines);
 
-        // --- LÓGICA DE SORTEIO (FISHER-YATES) ---
-        jogadoresOnline = embaralharArray(jogadoresOnline);
+        const qtdImpostores = Math.min(config.qtdImpostores, Math.max(1, Math.floor(onlines.length / 2)));
 
-        const qtdImpostoresReal = Math.min(dadosConfig.qtdImpostores, jogadoresOnline.length - 1);
-
-        jogadoresOnline.forEach((jogador, index) => {
-            if (index < qtdImpostoresReal) {
-                // Impostor
-                jogador.papel = "IMPOSTOR";
-                jogador.info = "Descubra a palavra!";
-                jogador.categoriaExibida = "???"; // O Impostor NÃO vê a categoria (ou vê, você decide)
-            } else {
-                // Cidadão
-                jogador.papel = "CIDADÃO";
-                jogador.info = palavraSecreta;
-                jogador.categoriaExibida = categoriaSorteada; // Cidadão vê a categoria
-            }
+        // Distribui Papéis
+        onlines.forEach((jog, idx) => {
+            const ehImpostor = idx < qtdImpostores;
+            jog.papel = ehImpostor ? "IMPOSTOR" : "CIDADÃO";
+            jog.info = ehImpostor ? "Descubra a palavra!" : palavraSecreta;
+            jog.categoriaExibida = ehImpostor ? "???" : catSorteada;
         });
 
-        // Envia as cartas
-        jogadoresOnline.forEach(j => {
-            io.to(j.socketId).emit('receberCarta', {
-                papel: j.papel,
-                info: j.info,
-                categoria: j.categoriaExibida // Enviamos a categoria aqui
-            });
-        });
+        // Envia para todos
+        onlines.forEach(jog => enviarCarta(io.to(jog.socketId), jog));
 
         estadoJogo.rodadaAtiva = true;
         io.emit('rodadaIniciada');
     });
 
-    // MESTRE: Encerra
+    // --- GAME: RESET ---
     socket.on('encerrarJogo', () => {
-        estadoJogo = {
-            criado: false,
-            jogadores: [],
-            config: {},
-            rodadaAtiva: false
-        };
+        estadoJogo = { criado: false, jogadores: [], config: {}, rodadaAtiva: false };
         io.emit('jogoEncerrado');
     });
 
-    // Desconexão
+    // --- DISCONNECT ---
     socket.on('disconnect', () => {
         const jogador = estadoJogo.jogadores.find(j => j.socketId === socket.id);
         if (jogador) {
@@ -125,15 +97,22 @@ io.on('connection', (socket) => {
     });
 });
 
-// Algoritmo Fisher-Yates para embaralhamento perfeito
-function embaralharArray(array) {
-    for (let i = array.length - 1; i > 0; i--) {
-        // Gera um índice aleatório ente 0 e i
-        const j = Math.floor(Math.random() * (i + 1));
-        // Troca os elementos de lugar
-        [array[i], array[j]] = [array[j], array[i]];
-    }
-    return array;
+// Helper: Envio de carta padronizado
+function enviarCarta(destino, jogador) {
+    destino.emit('receberCarta', {
+        papel: jogador.papel,
+        info: jogador.info,
+        categoria: jogador.categoriaExibida
+    });
 }
 
-http.listen(3000, '0.0.0.0', () => console.log('Servidor ON na porta 3000'));
+// Helper: Fisher-Yates Shuffle
+function embaralharArray(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+}
+
+http.listen(3000, '0.0.0.0', () => console.log('Servidor rodando na porta 3000'));

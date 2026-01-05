@@ -1,4 +1,4 @@
-const CACHE_NAME = 'impostor-v1';
+const CACHE_NAME = 'impostor-v2'; // Bump de versão
 const ASSETS_TO_CACHE = [
     '/',
     '/index.html',
@@ -8,10 +8,9 @@ const ASSETS_TO_CACHE = [
 ];
 
 self.addEventListener('install', (event) => {
+    self.skipWaiting(); // Força a atualização imediata
     event.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => {
-            return cache.addAll(ASSETS_TO_CACHE);
-        })
+        caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS_TO_CACHE))
     );
 });
 
@@ -20,9 +19,7 @@ self.addEventListener('activate', (event) => {
         caches.keys().then((keyList) => {
             return Promise.all(
                 keyList.map((key) => {
-                    if (key !== CACHE_NAME) {
-                        return caches.delete(key);
-                    }
+                    if (key !== CACHE_NAME) return caches.delete(key);
                 })
             );
         })
@@ -30,12 +27,18 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-    // Não cacheia socket.io nem requisições de API dinâmicas
     if (event.request.url.includes('socket.io')) return;
 
     event.respondWith(
         caches.match(event.request).then((response) => {
-            return response || fetch(event.request);
+            // Estratégia Stale-while-revalidate (Usa cache, mas atualiza em background)
+            const fetchPromise = fetch(event.request).then((networkResponse) => {
+                caches.open(CACHE_NAME).then((cache) => {
+                    cache.put(event.request, networkResponse.clone());
+                });
+                return networkResponse;
+            });
+            return response || fetchPromise;
         })
     );
 });

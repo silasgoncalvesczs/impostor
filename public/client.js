@@ -1,224 +1,157 @@
 const socket = io();
-let euSouMestre = false;
-let primeiraRodada = true;
-let nomePendente = '';
 
-// Variáveis de Controle de Estado Local
-let qtdJogadoresSetup = 4; // Controle da tela de cadastro (Setup)
-let qtdImpostoresAtual = 1; // Controle do Painel do Mestre
-let maxImpostoresPermitido = 1; // Limite calculado dinamicamente
+// Estado Global do Cliente
+const state = {
+    euSouMestre: false,
+    primeiraRodada: true,
+    nomePendente: '',
+    qtdJogadoresSetup: 4,
+    qtdImpostoresAtual: 1,
+    maxImpostoresPermitido: 1
+};
 
-const CATEGORIAS_DISPONIVEIS = [
+// Cache de Elementos DOM (Performance)
+const EL = {
+    telas: {
+        setup: document.getElementById('telaSetup'),
+        selecao: document.getElementById('telaSelecao'),
+        mestre: document.getElementById('telaMestre'),
+        jogo: document.getElementById('telaJogo')
+    },
+    setup: {
+        listaInputs: document.getElementById('listaInputsNomes'),
+        displayQtd: document.getElementById('displayQtd'),
+        btnCriar: document.getElementById('btnCriarSala')
+    },
+    mestre: {
+        linkInput: document.getElementById('linkSala'),
+        listaJogadores: document.getElementById('statusJogadores'),
+        countJogadores: document.getElementById('countJogadores'),
+        categoriasContainer: document.getElementById('containerCategorias'),
+        displayImp: document.getElementById('displayQtdImp'),
+        msgLimite: document.getElementById('msgLimiteImpostor'),
+        btnIniciar: document.getElementById('btnIniciarRodada')
+    },
+    jogo: {
+        carta: document.getElementById('cartaJogo'),
+        badge: document.getElementById('badgePapel'),
+        info: document.getElementById('minhaInfo'),
+        categoria: document.getElementById('minhaCategoria'),
+        msgMestre: document.getElementById('msgMestre')
+    },
+    modal: {
+        overlay: document.getElementById('modalConfirmacao'),
+        nome: document.getElementById('nomeConfirmacao')
+    }
+};
+
+const CATEGORIAS = [
     "Objetos do cotidiano", "Pessoas famosas", "Comidas e Bebidas",
     "Marcas e Logotipos", "Países e Cidades", "Hobbies e Atividades",
     "Filmes e Séries", "Profissões", "Esportes"
 ];
 
-// Elementos DOM (Cache)
-const telas = {
-    setup: document.getElementById('telaSetup'),
-    selecao: document.getElementById('telaSelecao'),
-    mestre: document.getElementById('telaMestre'),
-    jogo: document.getElementById('telaJogo')
-};
-
 // --- Inicialização ---
 document.addEventListener('DOMContentLoaded', () => {
-    // Inicializa a tela de setup
-    atualizarInputsNomes();
-    gerarCheckboxesCategorias();
-
-    // Recupera status local (Reconexão/Refresh)
-    if (localStorage.getItem('impostor_sou_mestre') === 'true') {
-        euSouMestre = true;
-    }
-    const nomeSalvo = localStorage.getItem('impostor_meu_nome');
-    if (nomeSalvo && !euSouMestre) {
-        socket.emit('escolherNome', nomeSalvo);
-    }
-
-    // --- LISTENERS: TELA DE SETUP (+ e - Jogadores) ---
-    document.getElementById('btnMenos').addEventListener('click', () => {
-        if (qtdJogadoresSetup > 3) {
-            qtdJogadoresSetup--;
-            atualizarInputsNomes();
-        }
-    });
-
-    document.getElementById('btnMais').addEventListener('click', () => {
-        if (qtdJogadoresSetup < 20) {
-            qtdJogadoresSetup++;
-            atualizarInputsNomes();
-        }
-    });
-
-    // --- LISTENERS: PAINEL DO MESTRE ---
-
-    // Botões de Link
-    document.getElementById('btnCopiar').addEventListener('click', copiarLink);
-    document.getElementById('btnShare').addEventListener('click', compartilharLink);
-
-    // Controle de Impostores (+ e -)
-    document.getElementById('btnMenosImp').addEventListener('click', () => {
-        if (qtdImpostoresAtual > 1) {
-            qtdImpostoresAtual--;
-            atualizarDisplayImpostores();
-        }
-    });
-
-    document.getElementById('btnMaisImp').addEventListener('click', () => {
-        if (qtdImpostoresAtual < maxImpostoresPermitido) {
-            qtdImpostoresAtual++;
-            atualizarDisplayImpostores();
-        } else {
-            // Feedback visual de erro (pisca vermelho)
-            const display = document.getElementById('displayQtdImp');
-            display.style.color = '#ff4444';
-            setTimeout(() => display.style.color = 'white', 300);
-        }
-    });
-
-    // --- LISTENERS: GERAIS ---
-    document.getElementById('btnCriarSala').addEventListener('click', criarSala);
-    document.getElementById('btnIniciarRodada').addEventListener('click', iniciarRodada);
-    document.getElementById('btnSairSala').addEventListener('click', () => location.reload());
-
-    // Botão Encerrar
-    document.getElementById('btnEncerrar').addEventListener('click', () => {
-        if (confirm("Tem certeza? Isso vai desconectar todos os jogadores.")) {
-            socket.emit('encerrarJogo');
-        }
-    });
-
-    // Modal de Confirmação
-    document.getElementById('btnCancelar').addEventListener('click', fecharModal);
-    document.getElementById('btnConfirmar').addEventListener('click', confirmarEntrada);
+    initSetup();
+    initListeners();
+    checkLocalStorage();
 });
 
-
-// --- LÓGICA: TELA DE SETUP (INPUTS INTELIGENTES) ---
-function actualizarInputsNomes() { // Nota: Mantive o nome da função conforme lógica anterior
+function initSetup() {
     atualizarInputsNomes();
+    gerarCategorias();
+}
+
+function checkLocalStorage() {
+    if (localStorage.getItem('impostor_sou_mestre') === 'true') {
+        state.euSouMestre = true;
+    }
+    const nomeSalvo = localStorage.getItem('impostor_meu_nome');
+    if (nomeSalvo && !state.euSouMestre) {
+        socket.emit('escolherNome', nomeSalvo);
+    }
+}
+
+function initListeners() {
+    // Tela Setup
+    document.getElementById('btnMenos').onclick = () => alterarQtdJogadores(-1);
+    document.getElementById('btnMais').onclick = () => alterarQtdJogadores(1);
+    EL.setup.btnCriar.onclick = criarSala;
+
+    // Tela Mestre
+    document.getElementById('btnCopiar').onclick = copiarLink;
+    document.getElementById('btnShare').onclick = compartilharLink;
+    document.getElementById('btnMenosImp').onclick = () => alterarQtdImpostores(-1);
+    document.getElementById('btnMaisImp').onclick = () => alterarQtdImpostores(1);
+    EL.mestre.btnIniciar.onclick = iniciarRodada;
+    document.getElementById('btnEncerrar').onclick = encerrarJogo;
+
+    // Tela Jogo
+    EL.jogo.carta.onclick = function () { this.classList.toggle('is-flipped'); };
+    document.getElementById('btnSairSala').onclick = () => location.reload();
+
+    // Modal
+    document.getElementById('btnCancelar').onclick = fecharModal;
+    document.getElementById('btnConfirmar').onclick = confirmarEntrada;
+}
+
+// --- Funções Lógicas ---
+
+function alterarQtdJogadores(delta) {
+    const novaQtd = state.qtdJogadoresSetup + delta;
+    if (novaQtd >= 3 && novaQtd <= 20) {
+        state.qtdJogadoresSetup = novaQtd;
+        atualizarInputsNomes();
+    }
 }
 
 function atualizarInputsNomes() {
-    const container = document.getElementById('listaInputsNomes');
-    const display = document.getElementById('displayQtd');
-
-    // Atualiza o visor numérico
-    display.innerText = qtdJogadoresSetup;
-
-    const inputsExistentes = container.children.length;
-    const diferenca = qtdJogadoresSetup - inputsExistentes;
+    EL.setup.displayQtd.innerText = state.qtdJogadoresSetup;
+    const inputsExistentes = EL.setup.listaInputs.children.length;
+    const diferenca = state.qtdJogadoresSetup - inputsExistentes;
 
     if (diferenca > 0) {
-        // Adiciona novos campos
         for (let i = 0; i < diferenca; i++) {
-            const novoIndex = inputsExistentes + i + 1;
             const input = document.createElement('input');
             input.type = "text";
             input.className = "input-nome";
-            input.placeholder = `Nome do Jogador ${novoIndex}`;
-
-            // Foca suavemente no primeiro novo input
+            input.placeholder = `Nome do Jogador ${inputsExistentes + i + 1}`;
             if (i === 0) setTimeout(() => input.focus(), 50);
-            container.appendChild(input);
+            EL.setup.listaInputs.appendChild(input);
         }
-    } else if (diferenca < 0) {
-        // Remove os últimos campos
+    } else {
         for (let i = 0; i < Math.abs(diferenca); i++) {
-            if (container.lastChild) {
-                container.removeChild(container.lastChild);
+            if (EL.setup.listaInputs.lastChild) {
+                EL.setup.listaInputs.removeChild(EL.setup.listaInputs.lastChild);
             }
         }
     }
 }
 
-
-// --- SOCKET LISTENERS ---
-
-socket.on('jogoEncerrado', () => {
-    localStorage.removeItem('impostor_sou_mestre');
-    localStorage.removeItem('impostor_meu_nome');
-    location.reload();
-});
-
-socket.on('estadoAtual', (estado) => {
-    if (!estado.criado) {
-        mostrarTela('setup');
-        return;
+function alterarQtdImpostores(delta) {
+    const novaQtd = state.qtdImpostoresAtual + delta;
+    if (novaQtd >= 1 && novaQtd <= state.maxImpostoresPermitido) {
+        state.qtdImpostoresAtual = novaQtd;
+        EL.mestre.displayImp.innerText = state.qtdImpostoresAtual;
+    } else if (delta > 0) {
+        EL.mestre.displayImp.style.color = '#ff4444';
+        setTimeout(() => EL.mestre.displayImp.style.color = 'white', 300);
     }
-
-    if (euSouMestre) {
-        mostrarTela('mestre');
-        atualizarPainelMestre(estado);
-        return;
-    }
-
-    // Se a rodada está ativa e já tenho papel, fico no jogo
-    const textoCarta = document.getElementById('minhaInfo').innerText;
-    if (estado.rodadaAtiva && textoCarta !== "...") {
-        mostrarTela('jogo');
-        return;
-    }
-
-    // Caso contrário, vou para seleção
-    mostrarTela('selecao');
-    renderizarListaNomes(estado.jogadores);
-});
-
-socket.on('receberCarta', (dados) => {
-    mostrarTela('jogo');
-    const elBadge = document.getElementById('badgePapel');
-    const elInfo = document.getElementById('minhaInfo');
-    const elCat = document.getElementById('minhaCategoria'); // Novo elemento
-
-    elBadge.innerText = dados.papel;
-    elInfo.innerText = dados.info;
-    elCat.innerText = dados.categoria || ""; // Mostra a categoria
-
-    if (dados.papel === "IMPOSTOR") {
-        elBadge.className = "role-badge impostor-badge";
-        elInfo.style.color = "#e94560";
-        elCat.style.color = "#666"; // Impostor vê "???" mais apagado
-    } else {
-        elBadge.className = "role-badge cidadao-badge";
-        elInfo.style.color = "#ffffff";
-        elCat.style.color = "#4effef"; // Cidadão vê a categoria em destaque
-    }
-
-    if (euSouMestre) {
-        document.getElementById('msgMestre').classList.remove('hidden');
-    }
-});
-
-socket.on('loginSucesso', (dados) => {
-    localStorage.setItem('impostor_meu_nome', dados.nome);
-    document.querySelector('#telaSelecao').innerHTML = `
-        <div style="margin-top: 50px;">
-            <h3>Olá, ${dados.nome}!</h3>
-            <p>👀 De olho na tela...</p>
-            <p style="color:#aaa;">O Mestre vai iniciar a rodada em breve.</p>
-        </div>
-    `;
-});
-
-
-// --- FUNÇÕES DE AÇÃO ---
+}
 
 function criarSala() {
     const inputs = document.querySelectorAll('.input-nome');
-    const nomes = Array.from(inputs).map(input => input.value).filter(v => v !== "");
+    const nomes = Array.from(inputs).map(inp => inp.value.trim()).filter(v => v !== "");
+
     if (nomes.length < 3) return alert("Mínimo de 3 jogadores!");
 
-    socket.emit('criarSala', { nomes: nomes });
-
-    euSouMestre = true;
+    socket.emit('criarSala', { nomes });
+    state.euSouMestre = true;
     localStorage.setItem('impostor_sou_mestre', 'true');
-    mostrarTela('mestre');
 
-    // Preenche o input de link
-    document.getElementById('linkSala').value = window.location.href;
+    mostrarTela('mestre');
+    EL.mestre.linkInput.value = window.location.href;
 }
 
 function iniciarRodada() {
@@ -227,24 +160,96 @@ function iniciarRodada() {
 
     if (categoriasSelecionadas.length === 0) return alert("Selecione pelo menos uma categoria!");
 
-    // Envia a quantidade de impostores definida na variável global
     socket.emit('iniciarRodada', {
         categorias: categoriasSelecionadas,
-        qtdImpostores: qtdImpostoresAtual
+        qtdImpostores: state.qtdImpostoresAtual
     });
 
-    if (primeiraRodada) {
-        document.getElementById('btnIniciarRodada').innerText = "INICIAR PRÓXIMA RODADA";
-        primeiraRodada = false;
+    if (state.primeiraRodada) {
+        EL.mestre.btnIniciar.innerText = "INICIAR PRÓXIMA RODADA";
+        state.primeiraRodada = false;
     }
 }
 
+function encerrarJogo() {
+    if (confirm("Encerrar desconecta todos os jogadores. Confirmar?")) {
+        socket.emit('encerrarJogo');
+    }
+}
 
-// --- FUNÇÕES AUXILIARES E UI ---
+// --- Socket Events ---
+
+socket.on('jogoEncerrado', () => {
+    localStorage.removeItem('impostor_sou_mestre');
+    localStorage.removeItem('impostor_meu_nome');
+    location.reload();
+});
+
+socket.on('estadoAtual', (estado) => {
+    if (!estado.criado) return mostrarTela('setup');
+
+    if (state.euSouMestre) {
+        mostrarTela('mestre');
+        atualizarPainelMestre(estado);
+        return;
+    }
+
+    const jaTenhoCarta = EL.jogo.info.innerText !== "...";
+    if (estado.rodadaAtiva && jaTenhoCarta) {
+        mostrarTela('jogo');
+    } else {
+        mostrarTela('selecao');
+        renderizarListaNomes(estado.jogadores);
+    }
+});
+
+socket.on('receberCarta', (dados) => {
+    mostrarTela('jogo');
+    const { carta, badge, info, categoria, msgMestre } = EL.jogo;
+    const estaAberta = carta.classList.contains('is-flipped');
+
+    const atualizarUI = () => {
+        badge.innerText = dados.papel;
+        info.innerText = dados.info;
+        categoria.innerText = dados.categoria || "";
+
+        if (dados.papel === "IMPOSTOR") {
+            badge.className = "role-badge impostor-badge";
+            info.style.color = "#e94560";
+            categoria.style.color = "#666";
+        } else {
+            badge.className = "role-badge cidadao-badge";
+            info.style.color = "#ffffff";
+            categoria.style.color = "#4effef";
+        }
+    };
+
+    if (estaAberta) {
+        carta.classList.remove('is-flipped');
+        setTimeout(atualizarUI, 300); // Aguarda metade da animação (flip)
+    } else {
+        atualizarUI();
+    }
+
+    if (state.euSouMestre) msgMestre.classList.remove('hidden');
+});
+
+socket.on('loginSucesso', (dados) => {
+    localStorage.setItem('impostor_meu_nome', dados.nome);
+    EL.telas.selecao.innerHTML = `
+        <div style="margin-top: 50px;">
+            <h3>Olá, ${dados.nome}!</h3>
+            <p>👀 Aguarde...</p>
+            <p style="color:#aaa;">O Mestre iniciará a rodada.</p>
+        </div>
+    `;
+});
+
+// --- UI Helpers ---
 
 function mostrarTela(id) {
-    Object.values(telas).forEach(t => t.classList.add('hidden'));
-    telas[id].classList.remove('hidden');
+    Object.values(EL.telas).forEach(t => t.classList.add('hidden'));
+    EL.telas[id].classList.remove('hidden');
 }
 
 function renderizarListaNomes(jogadores) {
@@ -256,7 +261,7 @@ function renderizarListaNomes(jogadores) {
         btn.className = `btn-nome ${ocupado ? 'ocupado' : ''}`;
 
         if (ocupado) {
-            btn.innerHTML = `👤 ${j.nome} <span style="font-size:12px; float:right; margin-top:4px;">(Já entrou)</span>`;
+            btn.innerHTML = `👤 ${j.nome} <span class="sm-text" style="float:right;">(Entrou)</span>`;
             btn.disabled = true;
         } else {
             btn.innerHTML = `👉 Entrar como <b>${j.nome}</b>`;
@@ -267,154 +272,88 @@ function renderizarListaNomes(jogadores) {
 }
 
 function atualizarPainelMestre(estado) {
-    const ul = document.getElementById('statusJogadores');
-    ul.innerHTML = "";
+    EL.mestre.listaJogadores.innerHTML = "";
+    const online = estado.jogadores.filter(j => j.socketId !== null);
 
-    // Filtra e conta online
-    const jogadoresOnline = estado.jogadores.filter(j => j.socketId !== null);
-    const qtdOnline = jogadoresOnline.length;
-
-    // Atualiza contador no título
-    document.getElementById('countJogadores').innerText = qtdOnline;
+    EL.mestre.countJogadores.innerText = online.length;
 
     estado.jogadores.forEach(j => {
-        const status = j.socketId ? "<span style='color:#4effef'>Online</span>" : "<span style='color:#666'>...</span>";
-        ul.innerHTML += `<li><span>${j.nome}</span> ${status}</li>`;
+        const status = j.socketId ? "<span class='text-accent'>Online</span>" : "<span class='text-muted'>...</span>";
+        EL.mestre.listaJogadores.innerHTML += `<li><span>${j.nome}</span> ${status}</li>`;
     });
 
-    // --- LÓGICA DE LIMITE DE IMPOSTORES ---
-    // Regra: Máximo é a metade dos jogadores online (arredondado para baixo). Minimo 1.
-    maxImpostoresPermitido = Math.floor(qtdOnline / 2);
-    if (maxImpostoresPermitido < 1) maxImpostoresPermitido = 1;
+    state.maxImpostoresPermitido = Math.max(1, Math.floor(online.length / 2));
+    EL.mestre.msgLimite.innerText = `Máximo: ${state.maxImpostoresPermitido}`;
 
-    // Atualiza texto de aviso
-    document.getElementById('msgLimiteImpostor').innerText = `Máximo permitido: ${maxImpostoresPermitido}`;
-
-    // Ajusta se o valor atual for maior que o permitido (ex: alguém saiu)
-    if (qtdImpostoresAtual > maxImpostoresPermitido) {
-        qtdImpostoresAtual = maxImpostoresPermitido;
+    if (state.qtdImpostoresAtual > state.maxImpostoresPermitido) {
+        state.qtdImpostoresAtual = state.maxImpostoresPermitido;
     }
-    atualizarDisplayImpostores();
+    EL.mestre.displayImp.innerText = state.qtdImpostoresAtual;
 }
 
-function atualizarDisplayImpostores() {
-    document.getElementById('displayQtdImp').innerText = qtdImpostoresAtual;
-}
-
-function gerarCheckboxesCategorias() {
-    const container = document.getElementById('containerCategorias');
-    container.innerHTML = "";
-    CATEGORIAS_DISPONIVEIS.forEach((cat, index) => {
-        const id = `cat-${index}`;
+function gerarCategorias() {
+    EL.mestre.categoriasContainer.innerHTML = "";
+    CATEGORIAS.forEach((cat, idx) => {
+        const id = `cat-${idx}`;
         const input = document.createElement('input');
         input.type = "checkbox"; input.id = id; input.value = cat; input.className = "tag-checkbox";
-        if (index === 0) input.checked = true;
+        if (idx === 0) input.checked = true;
 
         const label = document.createElement('label');
         label.htmlFor = id; label.className = "tag-label"; label.innerText = cat;
-
-        container.appendChild(input); container.appendChild(label);
+        EL.mestre.categoriasContainer.append(input, label);
     });
 }
 
-// --- FUNÇÕES DE LINK (COPIAR E COMPARTILHAR) ---
-
+// --- Shared & Modal ---
 function copiarLink() {
-    const linkInput = document.getElementById('linkSala');
-
-    // 1. Seleciona o texto (Necessário para o método antigo funcionar)
-    linkInput.select();
-    linkInput.setSelectionRange(0, 99999); // Para funcionar bem em celulares
-
-    // 2. Tenta copiar usando o método antigo (execCommand)
-    // Este método funciona em HTTP/Rede Local (192.168.x.x), onde a API nova falha.
+    EL.mestre.linkInput.select();
+    EL.mestre.linkInput.setSelectionRange(0, 99999);
     try {
-        const copiouSucesso = document.execCommand('copy');
-
-        if (copiouSucesso) {
-            exibirFeedbackSucesso();
-        } else {
-            // Se falhar, tenta o método moderno (Clipboard API) como fallback
-            usarApiModerna(linkInput.value);
-        }
-    } catch (err) {
-        // Se der erro no execCommand, tenta a API moderna
-        usarApiModerna(linkInput.value);
-    }
+        if (document.execCommand('copy')) return feedbackSucesso();
+        usarClipboardApi();
+    } catch { usarClipboardApi(); }
 }
 
-// Função auxiliar para tentar a API moderna (caso esteja em localhost ou HTTPS)
-function usarApiModerna(texto) {
+function usarClipboardApi() {
     if (navigator.clipboard) {
-        navigator.clipboard.writeText(texto)
-            .then(() => exibirFeedbackSucesso())
-            .catch(err => {
-                console.error('Falha ao copiar:', err);
-                alert("O navegador bloqueou a cópia automática. O link já está selecionado, por favor copie manualmente.");
-            });
+        navigator.clipboard.writeText(EL.mestre.linkInput.value)
+            .then(feedbackSucesso)
+            .catch(() => alert("Copie o link manualmente."));
     }
 }
 
-// Função para mostrar o "Vzinho" ✅
-function exibirFeedbackSucesso() {
+function feedbackSucesso() {
     const btn = document.getElementById('btnCopiar');
-    const originalHtml = btn.innerHTML; // Salva o ícone original
-
-    // Muda para o check verde
+    const htmlOriginal = btn.innerHTML;
     btn.innerHTML = "✅";
-    btn.style.borderColor = "#4effef"; // Opcional: muda a borda para verde neon
-
-    // Volta ao normal depois de 1.5 segundos
-    setTimeout(() => {
-        btn.innerHTML = originalHtml;
-        btn.style.borderColor = ""; // Reseta a borda
-    }, 1500);
+    setTimeout(() => btn.innerHTML = htmlOriginal, 1500);
 }
 
 async function compartilharLink() {
-    const link = document.getElementById('linkSala').value;
-    const textoParaEnviar = `🕵️ Venha jogar *Quem é o Impostor?* comigo!\nEntre na sala: ${link}`;
-
-    const shareData = {
-        title: 'Quem é o Impostor?',
-        text: 'Venha jogar Impostor comigo!',
-        url: link
-    };
-
-    // 1. Tenta o compartilhamento nativo do celular (Geralmente requer HTTPS)
+    const link = EL.mestre.linkInput.value;
+    const data = { title: 'Impostor', text: 'Venha jogar!', url: link };
     if (navigator.share) {
-        try {
-            await navigator.share(shareData);
-        } catch (err) {
-            console.log('Share cancelado ou erro:', err);
-        }
-    }
-    // 2. Fallback: Se não suportar (PC ou HTTP local), abre o WhatsApp
-    else {
-        const textoCodificado = encodeURIComponent(textoParaEnviar);
-        const urlWhatsApp = `https://api.whatsapp.com/send?text=${textoCodificado}`;
-
-        // Abre o WhatsApp em uma nova aba
-        window.open(urlWhatsApp, '_blank');
+        try { await navigator.share(data); } catch { }
+    } else {
+        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent('🕵️ Jogue Impostor: ' + link)}`, '_blank');
     }
 }
 
-// --- FUNÇÕES DO MODAL ---
-
 function abrirModalConfirmacao(nome) {
-    nomePendente = nome;
-    document.getElementById('nomeConfirmacao').innerText = nome;
-    document.getElementById('modalConfirmacao').classList.add('mostrar');
+    state.nomePendente = nome;
+    EL.modal.nome.innerText = nome;
+    EL.modal.overlay.classList.add('mostrar');
 }
 
 function fecharModal() {
-    document.getElementById('modalConfirmacao').classList.remove('mostrar');
-    nomePendente = '';
+    EL.modal.overlay.classList.remove('mostrar');
+    state.nomePendente = '';
 }
 
 function confirmarEntrada() {
-    if (nomePendente) {
-        socket.emit('escolherNome', nomePendente);
+    if (state.nomePendente) {
+        socket.emit('escolherNome', state.nomePendente);
         fecharModal();
     }
 }
