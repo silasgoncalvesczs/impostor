@@ -5,19 +5,43 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quem é o Impostor?</title>
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1a1a2e">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
     <div class="container">
-        <h1>🕵️ Impostor</h1>
+
+        <div class="header-logo">
+            <div style="font-size: 60px;">🕵️</div>
+            <h1>Impostor</h1>
+
+            <p class="game-desc">
+                Todos recebem a mesma palavra, exceto um...<br>
+                Faça perguntas, encontre o mentiroso, mas cuidado:<br>
+                <strong>não revele o segredo!</strong> 🤫
+            </p>
+        </div>
 
         <div id="telaSetup" class="hidden">
-            <h3>Configurar Sala</h3>
-            <label class="label-desc">Quantas pessoas vão jogar?</label>
-            <input type="number" id="qtdJogadores" min="3" max="20" value="4">
-            <div id="listaInputsNomes"></div>
-            <button class="btn-primary" id="btnCriarSala">CRIAR SALA</button>
+            <div class="card-setup">
+                <h3>Configurar Sala</h3>
+                <p class="label-desc">Quantos jogadores?</p>
+
+                <div class="counter-control">
+                    <button class="btn-counter" id="btnMenos">➖</button>
+                    <span id="displayQtd">4</span>
+                    <button class="btn-counter" id="btnMais">➕</button>
+                </div>
+
+                <div id="listaInputsNomes" class="inputs-container"></div>
+
+                <button class="btn-primary mt-20" id="btnCriarSala">CRIAR SALA</button>
+            </div>
         </div>
 
         <div id="telaSelecao" class="hidden">
@@ -28,26 +52,36 @@
 
         <div id="telaMestre" class="hidden">
             <h3>Painel do Mestre</h3>
-            <div class="box-link">
-                <p class="aviso-link">Mande este link para o grupo:</p>
-                <input type="text" id="linkSala" readonly class="input-link">
+
+            <div class="box-link-container">
+                <p class="aviso-link">Convide os jogadores:</p>
+                <div class="link-wrapper">
+                    <input type="text" id="linkSala" readonly class="input-link-modern">
+                    <button id="btnCopiar" class="btn-icon" title="Copiar Link">📋</button>
+                    <button id="btnShare" class="btn-icon" title="Compartilhar">🔗</button>
+                </div>
             </div>
 
-            <h4 style="text-align: left; margin-bottom: 5px;">Jogadores:</h4>
+            <h4 style="text-align: left; margin-bottom: 5px;">
+                Jogadores Online: <span id="countJogadores" style="color: #4effef;">0</span>
+            </h4>
             <ul id="statusJogadores" style="margin-bottom: 20px;"></ul>
 
-            <hr style="border-color: #333; margin: 20px 0;">
+            <hr class="divisor-card">
 
-            <h4 style="text-align: left;">Configurar Próxima Rodada:</h4>
-            <p class="label-desc">Categorias (Selecione pelo menos 1):</p>
+            <h4 style="text-align: left;">Configurar Rodada:</h4>
+
+            <p class="label-desc">Categorias:</p>
             <div id="containerCategorias" class="tags-container"></div>
 
             <label class="label-desc mt-15">Número de Impostores:</label>
-            <div class="impostor-selector">
-                <label><input type="radio" name="radImp" value="1" checked> 1</label>
-                <label><input type="radio" name="radImp" value="2"> 2</label>
-                <label><input type="radio" name="radImp" value="3"> 3</label>
+
+            <div class="counter-control small-counter">
+                <button class="btn-counter" id="btnMenosImp">➖</button>
+                <span id="displayQtdImp">1</span>
+                <button class="btn-counter" id="btnMaisImp">➕</button>
             </div>
+            <p id="msgLimiteImpostor" class="sm-text" style="color: #666;">Máximo: 1</p>
 
             <button class="btn-primary mt-20" id="btnIniciarRodada">INICIAR RODADA</button>
             <button class="btn-secondary mt-20 sm-text" id="btnEncerrar">Encerrar Jogo</button>
@@ -57,10 +91,15 @@
             <div class="card">
                 <div class="rotulo-papel">Seu Papel</div>
                 <div id="badgePapel" class="role-badge">...</div>
+
                 <hr class="divisor-card">
+
+                <div id="minhaCategoria" class="categoria-destaque">...</div>
+
                 <p class="label-palavra">Sua Palavra:</p>
                 <div id="minhaInfo" class="palavra-secreta">...</div>
             </div>
+
             <p id="msgMestre" class="hidden aviso-mestre">Você é o Mestre. Controle o reinício pelo seu painel.</p>
             <button class="btn-secondary mt-30" id="btnSairSala">Sair da Sala</button>
         </div>
@@ -80,6 +119,14 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="client.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .catch(err => console.log('SW falhou:', err));
+            });
+        }
+    </script>
 </body>
 
 </html>

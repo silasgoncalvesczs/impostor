@@ -5,16 +5,107 @@ body {
     color: #fff;
     padding: 20px;
     margin: 0;
+    -webkit-user-select: none;
+    user-select: none;
 }
 
 .container {
     max-width: 500px;
     margin: 0 auto;
+    padding-bottom: 50px;
 }
 
-/* Elementos de Formulário */
-input,
-select,
+/* --- Header --- */
+.header-logo h1 {
+    margin: 0 0 20px 0;
+    font-size: 32px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #e94560;
+}
+
+/* --- Controle de Quantidade (Novo) --- */
+.counter-control {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 20px;
+    background: #0f3460;
+    padding: 10px;
+    border-radius: 12px;
+}
+
+.btn-counter {
+    background: #16213e;
+    color: white;
+    border: 1px solid #e94560;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: 0.1s;
+}
+
+.btn-counter:active {
+    background: #e94560;
+    transform: scale(0.9);
+}
+
+#displayQtd {
+    font-size: 24px;
+    font-weight: bold;
+    min-width: 30px;
+}
+
+/* --- Inputs de Nome (Melhorados) --- */
+.card-setup {
+    background: #16213e;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.inputs-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.input-nome {
+    background: #0f3460;
+    color: white;
+    border: 1px solid #2a2a40;
+    padding: 15px;
+    border-radius: 10px;
+    font-size: 16px;
+    transition: 0.3s;
+    animation: slideIn 0.3s ease-out;
+}
+
+.input-nome:focus {
+    border-color: #e94560;
+    outline: none;
+    background: #1a1a2e;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* --- Botões Gerais --- */
 button {
     width: 100%;
     padding: 14px;
@@ -22,22 +113,21 @@ button {
     border-radius: 8px;
     border: none;
     font-size: 16px;
-    box-sizing: border-box;
-}
-
-button {
     cursor: pointer;
     font-weight: bold;
     transition: 0.2s;
+    touch-action: manipulation;
 }
 
 .btn-primary {
     background: #e94560;
     color: white;
+    box-shadow: 0 4px 0 #c0354a;
 }
 
 .btn-primary:active {
-    transform: scale(0.98);
+    transform: translateY(4px);
+    box-shadow: none;
 }
 
 .btn-secondary {
@@ -46,7 +136,7 @@ button {
     color: white;
 }
 
-/* Utilitários */
+/* --- Utilitários --- */
 .hidden {
     display: none !important;
 }
@@ -75,13 +165,15 @@ button {
     font-size: 14px;
 }
 
-/* Botões de Nome */
+/* --- Lista de Nomes (Seleção) --- */
 .btn-nome {
     background: #0f3460;
     color: white;
     text-align: left;
     padding: 15px;
     font-size: 18px;
+    margin-bottom: 10px;
+    border-radius: 8px;
 }
 
 .btn-nome.ocupado {
@@ -91,18 +183,12 @@ button {
     border: 1px solid #333;
 }
 
-/* Painel do Mestre */
+/* --- Painel do Mestre --- */
 .box-link {
     background: #222;
     padding: 10px;
     border-radius: 8px;
     margin-bottom: 20px;
-}
-
-.aviso-link {
-    margin: 0;
-    font-size: 12px;
-    color: #aaa;
 }
 
 .input-link {
@@ -111,8 +197,7 @@ button {
     font-weight: bold;
     text-align: center;
     border: none;
-    margin: 0;
-    cursor: pointer;
+    width: 100%;
 }
 
 #statusJogadores {
@@ -122,13 +207,13 @@ button {
 }
 
 #statusJogadores li {
-    padding: 5px 0;
+    padding: 8px 0;
     border-bottom: 1px solid #333;
     display: flex;
     justify-content: space-between;
 }
 
-/* Checkboxes (Tags) */
+/* --- Tags e Categorias --- */
 .tags-container {
     display: flex;
     flex-wrap: wrap;
@@ -149,7 +234,7 @@ button {
     cursor: pointer;
     font-size: 14px;
     color: #ddd;
-    display: inline-block;
+    transition: 0.2s;
 }
 
 .tag-checkbox:checked+.tag-label {
@@ -159,7 +244,7 @@ button {
     font-weight: bold;
 }
 
-/* Seletor de Impostores */
+/* --- Seletor de Impostores --- */
 .impostor-selector {
     display: flex;
     justify-content: space-around;
@@ -169,10 +254,12 @@ button {
 }
 
 .impostor-selector label {
-    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 5px;
 }
 
-/* Card do Jogo */
+/* --- Card do Jogo --- */
 .card {
     background: #16213e;
     padding: 30px 20px;
@@ -185,30 +272,17 @@ button {
 .divisor-card {
     border-color: #333;
     opacity: 0.5;
+    margin: 15px 0;
 }
 
 .palavra-secreta {
-    font-size: 42px;
+    font-size: 38px;
     font-weight: 900;
-    margin: 10px 0 20px 0;
+    margin: 10px 0 10px 0;
     color: #ffffff;
     text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
-    line-height: 1.1;
     text-transform: uppercase;
-}
-
-.label-palavra {
-    color: #aaa;
-    margin-bottom: 0;
-    font-size: 14px;
-}
-
-.rotulo-papel {
-    font-size: 14px;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    color: #888;
-    margin-bottom: 5px;
+    word-wrap: break-word;
 }
 
 .role-badge {
@@ -217,7 +291,7 @@ button {
     font-weight: bold;
     padding: 5px 12px;
     border-radius: 20px;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
 }
 
 .impostor-badge {
@@ -232,13 +306,20 @@ button {
     border: 1px solid #4effef;
 }
 
+.rotulo-papel {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #888;
+}
+
 .aviso-mestre {
     font-size: 12px;
     color: #666;
     margin-top: 20px;
 }
 
-/* --- MODAL DE CONFIRMAÇÃO (CORRIGIDO) --- */
+/* --- Modal --- */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -247,13 +328,11 @@ button {
     height: 100%;
     background: rgba(0, 0, 0, 0.85);
     display: none;
-    /* PADRÃO INVISÍVEL */
     justify-content: center;
     align-items: center;
     z-index: 1000;
 }
 
-/* Classe que torna o modal visível via JS */
 .modal-overlay.mostrar {
     display: flex;
 }
@@ -273,4 +352,77 @@ button {
     display: flex;
     gap: 10px;
     margin-top: 20px;
+}
+
+/* --- Novo Estilo do Link (Painel Mestre) --- */
+.box-link-container {
+    background: #222;
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    border: 1px solid #333;
+}
+
+.link-wrapper {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.input-link-modern {
+    background: #16213e;
+    color: #4effef;
+    font-weight: bold;
+    border: 1px solid #0f3460;
+    padding: 10px;
+    border-radius: 8px;
+    flex-grow: 1;
+    /* Ocupa o espaço restante */
+    text-align: left;
+    font-size: 14px;
+}
+
+.btn-icon {
+    width: 46px;
+    /* Tamanho fixo quadrado */
+    margin: 0;
+    /* Remove margem padrão */
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    background: #16213e;
+    border: 1px solid #0f3460;
+    border-radius: 8px;
+}
+
+.btn-icon:active {
+    background: #e94560;
+    border-color: #e94560;
+}
+
+/* --- Ajuste para o contador de impostores (menor) --- */
+.small-counter {
+    margin-bottom: 5px;
+    background: #16213e;
+    /* Fundo mais discreto */
+}
+
+#msgLimiteImpostor {
+    margin-top: 0;
+    font-size: 12px;
+}
+
+/* Adicione isso junto com os estilos do Card */
+.categoria-destaque {
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: bold;
+    margin-bottom: 5px;
+    padding: 5px 10px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    display: inline-block;
 }
