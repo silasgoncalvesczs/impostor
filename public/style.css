@@ -1,0 +1,276 @@
+body {
+    font-family: 'Segoe UI', Roboto, sans-serif;
+    text-align: center;
+    background: #1a1a2e;
+    color: #fff;
+    padding: 20px;
+    margin: 0;
+}
+
+.container {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+/* Elementos de Formulário */
+input,
+select,
+button {
+    width: 100%;
+    padding: 14px;
+    margin: 8px 0;
+    border-radius: 8px;
+    border: none;
+    font-size: 16px;
+    box-sizing: border-box;
+}
+
+button {
+    cursor: pointer;
+    font-weight: bold;
+    transition: 0.2s;
+}
+
+.btn-primary {
+    background: #e94560;
+    color: white;
+}
+
+.btn-primary:active {
+    transform: scale(0.98);
+}
+
+.btn-secondary {
+    background: #16213e;
+    border: 1px solid #0f3460;
+    color: white;
+}
+
+/* Utilitários */
+.hidden {
+    display: none !important;
+}
+
+.mt-15 {
+    margin-top: 15px;
+}
+
+.mt-20 {
+    margin-top: 20px;
+}
+
+.mt-30 {
+    margin-top: 30px;
+}
+
+.sm-text {
+    font-size: 12px;
+    padding: 8px;
+}
+
+.label-desc {
+    text-align: left;
+    display: block;
+    color: #aaa;
+    font-size: 14px;
+}
+
+/* Botões de Nome */
+.btn-nome {
+    background: #0f3460;
+    color: white;
+    text-align: left;
+    padding: 15px;
+    font-size: 18px;
+}
+
+.btn-nome.ocupado {
+    background: #222;
+    color: #555;
+    cursor: not-allowed;
+    border: 1px solid #333;
+}
+
+/* Painel do Mestre */
+.box-link {
+    background: #222;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.aviso-link {
+    margin: 0;
+    font-size: 12px;
+    color: #aaa;
+}
+
+.input-link {
+    background: transparent;
+    color: #4effef;
+    font-weight: bold;
+    text-align: center;
+    border: none;
+    margin: 0;
+    cursor: pointer;
+}
+
+#statusJogadores {
+    list-style: none;
+    padding: 0;
+    text-align: left;
+}
+
+#statusJogadores li {
+    padding: 5px 0;
+    border-bottom: 1px solid #333;
+    display: flex;
+    justify-content: space-between;
+}
+
+/* Checkboxes (Tags) */
+.tags-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 15px;
+}
+
+.tag-checkbox {
+    display: none;
+}
+
+.tag-label {
+    background: #16213e;
+    border: 1px solid #444;
+    padding: 8px 15px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #ddd;
+    display: inline-block;
+}
+
+.tag-checkbox:checked+.tag-label {
+    background: #e94560;
+    color: white;
+    border-color: #e94560;
+    font-weight: bold;
+}
+
+/* Seletor de Impostores */
+.impostor-selector {
+    display: flex;
+    justify-content: space-around;
+    background: #16213e;
+    padding: 10px;
+    border-radius: 8px;
+}
+
+.impostor-selector label {
+    font-weight: bold;
+}
+
+/* Card do Jogo */
+.card {
+    background: #16213e;
+    padding: 30px 20px;
+    border-radius: 20px;
+    margin-top: 30px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    border: 1px solid #2a2a40;
+}
+
+.divisor-card {
+    border-color: #333;
+    opacity: 0.5;
+}
+
+.palavra-secreta {
+    font-size: 42px;
+    font-weight: 900;
+    margin: 10px 0 20px 0;
+    color: #ffffff;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+    line-height: 1.1;
+    text-transform: uppercase;
+}
+
+.label-palavra {
+    color: #aaa;
+    margin-bottom: 0;
+    font-size: 14px;
+}
+
+.rotulo-papel {
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #888;
+    margin-bottom: 5px;
+}
+
+.role-badge {
+    display: inline-block;
+    font-size: 16px;
+    font-weight: bold;
+    padding: 5px 12px;
+    border-radius: 20px;
+    margin-bottom: 20px;
+}
+
+.impostor-badge {
+    background: rgba(233, 69, 96, 0.2);
+    color: #e94560;
+    border: 1px solid #e94560;
+}
+
+.cidadao-badge {
+    background: rgba(78, 255, 239, 0.1);
+    color: #4effef;
+    border: 1px solid #4effef;
+}
+
+.aviso-mestre {
+    font-size: 12px;
+    color: #666;
+    margin-top: 20px;
+}
+
+/* --- MODAL DE CONFIRMAÇÃO (CORRIGIDO) --- */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    display: none;
+    /* PADRÃO INVISÍVEL */
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+/* Classe que torna o modal visível via JS */
+.modal-overlay.mostrar {
+    display: flex;
+}
+
+.modal-box {
+    background: #16213e;
+    padding: 25px;
+    border-radius: 15px;
+    width: 90%;
+    max-width: 350px;
+    border: 1px solid #4effef;
+    box-shadow: 0 0 20px rgba(78, 255, 239, 0.2);
+    text-align: center;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}

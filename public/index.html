@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quem é o Impostor?</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="container">
+        <h1>🕵️ Impostor</h1>
+
+        <div id="telaSetup" class="hidden">
+            <h3>Configurar Sala</h3>
+            <label class="label-desc">Quantas pessoas vão jogar?</label>
+            <input type="number" id="qtdJogadores" min="3" max="20" value="4">
+            <div id="listaInputsNomes"></div>
+            <button class="btn-primary" id="btnCriarSala">CRIAR SALA</button>
+        </div>
+
+        <div id="telaSelecao" class="hidden">
+            <h3>Quem é você?</h3>
+            <p class="label-desc">Toque no seu nome para entrar.</p>
+            <div id="listaNomesDisponiveis"></div>
+        </div>
+
+        <div id="telaMestre" class="hidden">
+            <h3>Painel do Mestre</h3>
+            <div class="box-link">
+                <p class="aviso-link">Mande este link para o grupo:</p>
+                <input type="text" id="linkSala" readonly class="input-link">
+            </div>
+
+            <h4 style="text-align: left; margin-bottom: 5px;">Jogadores:</h4>
+            <ul id="statusJogadores" style="margin-bottom: 20px;"></ul>
+
+            <hr style="border-color: #333; margin: 20px 0;">
+
+            <h4 style="text-align: left;">Configurar Próxima Rodada:</h4>
+            <p class="label-desc">Categorias (Selecione pelo menos 1):</p>
+            <div id="containerCategorias" class="tags-container"></div>
+
+            <label class="label-desc mt-15">Número de Impostores:</label>
+            <div class="impostor-selector">
+                <label><input type="radio" name="radImp" value="1" checked> 1</label>
+                <label><input type="radio" name="radImp" value="2"> 2</label>
+                <label><input type="radio" name="radImp" value="3"> 3</label>
+            </div>
+
+            <button class="btn-primary mt-20" id="btnIniciarRodada">INICIAR RODADA</button>
+            <button class="btn-secondary mt-20 sm-text" id="btnEncerrar">Encerrar Jogo</button>
+        </div>
+
+        <div id="telaJogo" class="hidden">
+            <div class="card">
+                <div class="rotulo-papel">Seu Papel</div>
+                <div id="badgePapel" class="role-badge">...</div>
+                <hr class="divisor-card">
+                <p class="label-palavra">Sua Palavra:</p>
+                <div id="minhaInfo" class="palavra-secreta">...</div>
+            </div>
+            <p id="msgMestre" class="hidden aviso-mestre">Você é o Mestre. Controle o reinício pelo seu painel.</p>
+            <button class="btn-secondary mt-30" id="btnSairSala">Sair da Sala</button>
+        </div>
+    </div>
+
+    <div id="modalConfirmacao" class="modal-overlay">
+        <div class="modal-box">
+            <h3>Confirmação</h3>
+            <p>Você deseja entrar como:</p>
+            <h2 id="nomeConfirmacao" style="color: #4effef;">...</h2>
+            <div class="modal-buttons">
+                <button class="btn-secondary" id="btnCancelar">Cancelar</button>
+                <button class="btn-primary" id="btnConfirmar">SIM, SOU EU</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="client.js"></script>
+</body>
+
+</html>
