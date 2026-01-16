@@ -30,7 +30,8 @@ const EL = {
         categoriasContainer: document.getElementById('containerCategorias'),
         displayImp: document.getElementById('displayQtdImp'),
         msgLimite: document.getElementById('msgLimiteImpostor'),
-        btnIniciar: document.getElementById('btnIniciarRodada')
+        btnIniciar: document.getElementById('btnIniciarRodada'),
+        btnToggle: document.getElementById('btnToggleMestre') // Botão Flutuante
     },
     jogo: {
         carta: document.getElementById('cartaJogo'),
@@ -66,9 +67,12 @@ function initSetup() {
 function checkLocalStorage() {
     if (localStorage.getItem('impostor_sou_mestre') === 'true') {
         state.euSouMestre = true;
+        // CORREÇÃO: Garante que o botão do mestre apareça no reload
+        EL.mestre.btnToggle.classList.remove('hidden');
+        EL.mestre.btnToggle.innerText = "👑 Painel";
     }
     const nomeSalvo = localStorage.getItem('impostor_meu_nome');
-    if (nomeSalvo && !state.euSouMestre) {
+    if (nomeSalvo) {
         socket.emit('escolherNome', nomeSalvo);
     }
 }
@@ -86,17 +90,24 @@ function initListeners() {
     document.getElementById('btnMaisImp').onclick = () => alterarQtdImpostores(1);
     EL.mestre.btnIniciar.onclick = iniciarRodada;
     document.getElementById('btnEncerrar').onclick = encerrarJogo;
+    EL.mestre.btnToggle.onclick = alternarVisaoMestre;
 
     // Tela Jogo
     EL.jogo.carta.onclick = function () { this.classList.toggle('is-flipped'); };
-    document.getElementById('btnSairSala').onclick = () => location.reload();
+    document.getElementById('btnSairSala').onclick = realizarLogout;
 
     // Modal
     document.getElementById('btnCancelar').onclick = fecharModal;
     document.getElementById('btnConfirmar').onclick = confirmarEntrada;
 }
 
-// --- Funções Lógicas ---
+// --- Funções Lógicas Globais ---
+
+function realizarLogout() {
+    localStorage.removeItem('impostor_meu_nome');
+    localStorage.removeItem('impostor_sou_mestre');
+    location.reload();
+}
 
 function alterarQtdJogadores(delta) {
     const novaQtd = state.qtdJogadoresSetup + delta;
@@ -147,10 +158,15 @@ function criarSala() {
     if (nomes.length < 3) return alert("Mínimo de 3 jogadores!");
 
     socket.emit('criarSala', { nomes });
+    
+    // Mestre definido, mas ainda precisa escolher nome
     state.euSouMestre = true;
     localStorage.setItem('impostor_sou_mestre', 'true');
+    
+    // Garante que o botão apareça imediatamente
+    EL.mestre.btnToggle.classList.remove('hidden');
+    EL.mestre.btnToggle.innerText = "👑 Painel";
 
-    mostrarTela('mestre');
     EL.mestre.linkInput.value = window.location.href;
 }
 
@@ -160,15 +176,23 @@ function iniciarRodada() {
 
     if (categoriasSelecionadas.length === 0) return alert("Selecione pelo menos uma categoria!");
 
+    // Feedback visual
+    const btn = EL.mestre.btnIniciar;
+    btn.disabled = true;
+    btn.innerText = "⏳ INICIANDO...";
+    btn.style.opacity = "0.7";
+
     socket.emit('iniciarRodada', {
         categorias: categoriasSelecionadas,
         qtdImpostores: state.qtdImpostoresAtual
     });
 
-    if (state.primeiraRodada) {
-        EL.mestre.btnIniciar.innerText = "INICIAR PRÓXIMA RODADA";
-        state.primeiraRodada = false;
-    }
+    setTimeout(() => {
+        btn.disabled = false;
+        btn.innerText = state.primeiraRodada ? "INICIAR RODADA" : "INICIAR PRÓXIMA RODADA";
+        btn.style.opacity = "1";
+        if (state.primeiraRodada) state.primeiraRodada = false;
+    }, 2000);
 }
 
 function encerrarJogo() {
@@ -177,34 +201,85 @@ function encerrarJogo() {
     }
 }
 
+function alternarVisaoMestre() {
+    const isMestreVisivel = !EL.telas.mestre.classList.contains('hidden');
+    
+    if (isMestreVisivel) {
+        // Ir para o jogo (ou seleção)
+        const tenhoNome = localStorage.getItem('impostor_meu_nome');
+        if (tenhoNome) {
+             mostrarTela('jogo');
+             // Se não tiver carta ainda (está na espera), volta pra tela de espera
+             if (EL.jogo.info.innerText === "...") {
+                 // Dispara reload simulado para renderizar tela de espera corretamente via socket
+                 socket.emit('escolherNome', tenhoNome); 
+             }
+        } else {
+             mostrarTela('selecao');
+        }
+        EL.mestre.btnToggle.innerText = "👑 Painel";
+    } else {
+        // Ir para o painel
+        mostrarTela('mestre');
+        EL.mestre.btnToggle.innerText = "🃏 Jogo";
+    }
+}
+
 // --- Socket Events ---
 
 socket.on('jogoEncerrado', () => {
-    localStorage.removeItem('impostor_sou_mestre');
-    localStorage.removeItem('impostor_meu_nome');
-    location.reload();
+    realizarLogout();
 });
 
 socket.on('estadoAtual', (estado) => {
-    if (!estado.criado) return mostrarTela('setup');
+    if (!estado.criado) {
+        EL.mestre.btnToggle.classList.add('hidden');
+        return mostrarTela('setup');
+    }
 
     if (state.euSouMestre) {
-        mostrarTela('mestre');
+        EL.mestre.btnToggle.classList.remove('hidden');
         atualizarPainelMestre(estado);
+    }
+
+    const nomeSalvo = localStorage.getItem('impostor_meu_nome');
+    
+    // 1. Sem nome: Tela de Seleção
+    if (!nomeSalvo) {
+        mostrarTela('selecao');
+        renderizarListaNomes(estado.jogadores);
         return;
     }
 
+    // 2. Com nome: Verificar estado
+    const estouNoMestre = !EL.telas.mestre.classList.contains('hidden');
     const jaTenhoCarta = EL.jogo.info.innerText !== "...";
-    if (estado.rodadaAtiva && jaTenhoCarta) {
-        mostrarTela('jogo');
+
+    if (estado.rodadaAtiva) {
+        if (!estouNoMestre) mostrarTela('jogo');
     } else {
-        mostrarTela('selecao');
-        renderizarListaNomes(estado.jogadores);
+        // Se a rodada não está ativa e eu não sou o mestre mexendo no painel,
+        // eu deveria estar na tela de "Aguarde..." (que é a tela de seleção modificada).
+        // O evento loginSucesso cuida disso.
+        
+        // Se eu sou mestre e recarreguei a página, mostro o painel
+        if (state.euSouMestre && !estouNoMestre && !jaTenhoCarta) {
+             mostrarTela('mestre');
+             EL.mestre.btnToggle.innerText = "🃏 Jogo";
+        } else if (!state.euSouMestre && !jaTenhoCarta) {
+             // Garante que renderize a lista se algo falhar, mas loginSucesso deve prevalecer
+             // mostrarTela('selecao'); 
+        }
     }
 });
 
 socket.on('receberCarta', (dados) => {
     mostrarTela('jogo');
+    
+    if (state.euSouMestre) {
+        EL.mestre.btnToggle.innerText = "👑 Painel";
+    }
+
     const { carta, badge, info, categoria, msgMestre } = EL.jogo;
     const estaAberta = carta.classList.contains('is-flipped');
 
@@ -226,7 +301,7 @@ socket.on('receberCarta', (dados) => {
 
     if (estaAberta) {
         carta.classList.remove('is-flipped');
-        setTimeout(atualizarUI, 300); // Aguarda metade da animação (flip)
+        setTimeout(atualizarUI, 300);
     } else {
         atualizarUI();
     }
@@ -236,13 +311,27 @@ socket.on('receberCarta', (dados) => {
 
 socket.on('loginSucesso', (dados) => {
     localStorage.setItem('impostor_meu_nome', dados.nome);
+    
+    // CORREÇÃO: Garante visibilidade do botão do Mestre
+    if (state.euSouMestre) {
+        EL.mestre.btnToggle.classList.remove('hidden');
+    }
+
+    // Renderiza a tela de espera com o botão de Sair
     EL.telas.selecao.innerHTML = `
         <div style="margin-top: 50px;">
             <h3>Olá, ${dados.nome}!</h3>
             <p>👀 Aguarde...</p>
             <p style="color:#aaa;">O Mestre iniciará a rodada.</p>
+            <button id="btnSairEspera" class="btn-secondary mt-30">Sair da Sala</button>
         </div>
     `;
+
+    // Vincula o evento de logout ao novo botão
+    setTimeout(() => {
+        const btn = document.getElementById('btnSairEspera');
+        if (btn) btn.onclick = realizarLogout;
+    }, 50);
 });
 
 // --- UI Helpers ---
@@ -254,6 +343,10 @@ function mostrarTela(id) {
 
 function renderizarListaNomes(jogadores) {
     const div = document.getElementById('listaNomesDisponiveis');
+    const nomeSalvo = localStorage.getItem('impostor_meu_nome');
+    
+    if (nomeSalvo) return; // Se já tem nome, loginSucesso cuida da tela
+
     div.innerHTML = "";
     jogadores.forEach(j => {
         const ocupado = j.socketId !== null;

@@ -21,7 +21,6 @@ body {
     -webkit-user-select: none;
     user-select: none;
     overflow-x: hidden;
-    /* Evita scroll horizontal indesejado */
 }
 
 .container {
@@ -468,4 +467,30 @@ button {
     display: flex;
     gap: 10px;
     margin-top: 20px;
+}
+
+/* --- Botão Flutuante do Mestre (NOVO) --- */
+.btn-floating-mestre {
+    position: fixed;
+    top: 15px;
+    right: 15px;
+    width: auto;
+    /* Sobrescreve o width: 100% padrão dos botões */
+    padding: 8px 16px;
+    background: var(--primary);
+    color: white;
+    font-size: 13px;
+    border-radius: 20px;
+    z-index: 2000;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    margin: 0;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.btn-floating-mestre:active {
+    transform: scale(0.95);
+    background: var(--primary-dark);
 }
